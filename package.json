@@ -20,7 +20,10 @@
     "graphql": "^16.7.1",
     "mongoose": "^6.3.4",
     "mongoose-algolia": "^1.10.1",
-    "mongoose-timestamp": "^0.6.0"
+    "mongoose-timestamp": "^0.6.0",
+    "mqtt": "^5.3.3",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
     "consola": "^3.2.3",

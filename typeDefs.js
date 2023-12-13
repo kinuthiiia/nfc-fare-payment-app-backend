@@ -30,6 +30,7 @@ type Transaction {
     amount: Int
     tag: Tag
     collector: Collector
+    createdAt: String
 }
 
 type User {
@@ -39,9 +40,16 @@ type User {
     image: String
     phoneNumber: String  
     tags: [Tag]
+    transactions: [Transaction]
     accountBalance: Int
     smsNotification: Boolean
     emailNotification: Boolean
+}
+
+type Payload {
+    type: String
+    message: String
+    data: Transaction
 }
 
 
@@ -60,13 +68,25 @@ type Mutation {
     ) : User
 
     cancelTag(
-        id: ID!
+        id: ID!        
     ) : User
 
     writeTag(
         serial: String
         account: ID
     ) : User
+
+    createUser(
+        name: String
+        email: String
+        phoneNumber: String
+    ): User
+
+    createCollector(
+        name: String
+        email: String
+        phoneNumber: String
+    ): User
 
     topUpAccount(
         code: String
@@ -76,11 +96,11 @@ type Mutation {
         account: ID
     ) : Deposit
 
-    payFare(
+    transact(
         tag: ID
         amount: Int
         collector: ID
-    ) : Transaction
+    ) : Payload
 }
 
 `;

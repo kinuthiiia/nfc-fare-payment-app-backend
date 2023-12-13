@@ -622,12 +622,134 @@ const _resolvers = {
 };
 
 const resolvers = {
+  User: {
+    transactions: async (parent, args) => {
+      let transactions = await Transaction.find({
+        tag: { $in: parent.tags },
+      }).populate("collector");
+      return transactions;
+    },
+  },
+
   Query: {
     getAccount: async (_, { email }) => {
-      let account = await User.findOne({ email });
+      let account = await User.findOne({ email }).populate("tags");
       return account;
     },
   },
-  Mutation: {},
+  Mutation: {
+    transact: async (_, { tag, amount, collector }) => {
+      try {
+        let payload = {};
+        let _tag = await Tag.findOne({ serial: tag });
+
+        if (!_tag) {
+          payload = {
+            type: "error",
+            message: "Card is non-existent",
+            data: null,
+          };
+          return payload;
+        }
+
+        if (new Date(parseInt(_tag?.cancelledAt)).getTime() < Date.now()) {
+          payload = {
+            type: "error",
+            message: "Tag cancelled",
+            data: null,
+          };
+          return payload;
+        }
+
+        let user = await User.findOne({ tags: { $in: _tag.id } }).populate(
+          "tags"
+        );
+
+        if (user?.accountBalance < amount) {
+          payload = {
+            type: "error",
+            message: "Insufficient funds",
+            data: null,
+          };
+
+          return payload;
+        } else {
+          await User.findByIdAndUpdate(
+            user?.id,
+            { $inc: { accountBalance: -amount } },
+            { new: true }
+          );
+
+          let recipient = await Collector.findById(collector);
+
+          await Collector.findByIdAndUpdate(
+            recipient?.id,
+            { $inc: { accountBalance: amount } },
+            { new: true }
+          );
+
+          let newTransaction = new Transaction({
+            amount,
+            tag: _tag?.id,
+            collector,
+          });
+
+          let transaction = await newTransaction.save();
+
+          payload = {
+            type: "success",
+            message: "Payment successful",
+            data: transaction,
+          };
+          return payload;
+        }
+      } catch (error) {
+        payload = {
+          type: "error",
+          message: error?.message,
+          data: null,
+        };
+        return payload;
+      }
+    },
+
+    writeTag: async (_, { serial, account }) => {
+      let newTag = new Tag({
+        serial,
+      });
+
+      let tag = await newTag.save();
+
+      let user = await User.findByIdAndUpdate(account, {
+        $addToSet: { tags: tag?.id },
+      });
+
+      return user;
+    },
+
+    createUser: async (_, { name, email, phoneNumber }) => {
+      let newUser = new User({
+        name,
+        email,
+        phoneNumber,
+      });
+
+      let user = await newUser.save();
+
+      return user;
+    },
+
+    createCollector: async (_, { name, email, phoneNumber }) => {
+      let newCollector = new Collector({
+        name,
+        email,
+        phoneNumber,
+      });
+
+      let collector = await newCollector.save();
+
+      return collector;
+    },
+  },
 };
 export default resolvers;

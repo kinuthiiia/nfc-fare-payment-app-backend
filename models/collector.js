@@ -8,7 +8,7 @@ export const CollectorSchema = new Schema(
     name: String,
     email: String,
     phoneNumber: String,
-    accountBalance: Number,
+    accountBalance: { type: Number, default: 0 },
   },
   {
     collection: "collectors",
