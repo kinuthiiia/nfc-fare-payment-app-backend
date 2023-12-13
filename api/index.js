@@ -24,7 +24,10 @@ const io = new Server(httpServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
+    transports: ["websocket", "polling"],
+    credentials: true,
   },
+  allowEIO3: true,
 });
 
 // Creating an apollo server
